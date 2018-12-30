@@ -1,0 +1,164 @@
+setopt PROMPT_SUBST
+setopt append_history share_history histignorealldups
+setopt auto_cd
+
+setopt RM_STAR_WAIT
+setopt interactivecomments
+autoload -U colors compinit
+compinit
+colors
+
+HISTFILE=~/.histfile
+HISTSIZE=1000
+SAVEHIST=1000
+
+export EDITOR="vim"
+export USE_EDITOR=$EDITOR
+export VISUAL=$EDITOR
+
+bindkey -v
+bindkey "^[[A" history-beginning-search-backward
+bindkey "^[[B" history-beginning-search-forward
+
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' insert-unambiguous true
+zstyle ':completion:*' menu select=1 
+zstyle ':completion:*' select-prompt %SScolling active: current selection at %p%s
+
+setopt menu_complete
+setopt correct
+source /etc/zsh/git.zsh
+
+
+CLOCKCOLOR="%F{magenta}"
+CRED="%F{1}"
+CGREEN="%F{2}"
+CYELLOW="%F{3}"
+CBLUE="%F{4}"
+CMAGENTA="%F{5}"
+CCYAN="%F{6}"
+CWHITE="%F{7}"
+
+if [[ 256 -eq "${terminfo[colors]}" ]] then
+	# put overrides for 256color terminals here
+	CMAGENTA="%F{13}"
+	CLOCKCOLOR="%F{13}"
+fi
+
+function cpuname() {
+	exec 3< /proc/cpuinfo
+	until [ $done ]
+	do
+		read <&3 line
+		if [ $? != 0 ]; then
+		done=1
+		continue
+	fi
+	if [[ $line =~ 'model name.*'  ]]; then
+	done=1
+	echo ${line#[a-zA-Z\s]*: }
+fi
+done
+}
+
+function sysinfo() {
+	local os=$(uname)
+	local osversion=$(uname -r)
+	local vendor=$(sysctl -n hw.vendor)
+	local pname=$(sysctl -n hw.product)
+	local pfamily=$(sysctl -n hw.version)
+	local march=$(uname -m)
+	local cpuarch=$(uname -p)
+	local cpuname=$(sysctl -n hw.model)
+	print -P "%B%{$CMAGENTA%}OS%{$CWHITE%}:%{$CCYAN%}%b"$'\t'"$os %{$CWHITE%}%B$osversion%f%b"
+	print -P "%B%{$CMAGENTA%}MACH%{$CWHITE%}:%{$CCYAN%}%b"$'\t'"$march %f(%{$CWHITE%}%B$vendor $pfamily, $pname%f%b)"
+	print -P "%B%{$CMAGENTA%}CPU%{$CWHITE%}:%{$CCYAN%}%b"$'\t'"$cpuarch %f(%{$CWHITE%}%B$cpuname%b%f)"
+	print -P "%B%{$CMAGENTA%}TTY%{$CWHITE%}:%{$CCYAN%}%b"$'\t'"$TTY%f"
+}
+# Prompt stuff
+
+ZSH_THEME_GIT_PROMPT_PREFIX_CLEAN="%{$CCYAN%} on branch %{$CGREEN%}"
+ZSH_THEME_GIT_PROMPT_PREFIX_DIRTY="%{$CCYAN%} on branch %{$CYELLOW%}"
+ZSH_THEME_GIT_PROMPT_SUFFIX_CLEAN="%f"
+ZSH_THEME_GIT_PROMPT_SUFFIX_DIRTY="%f"
+ZSH_THEME_GIT_PROMPT_CLEAN=""
+ZSH_THEME_GIT_PROMPT_DIRTY="*"
+
+function pruser() {
+	if [[ $UID -ne 0 ]]; then # normal user
+		echo "%{$CGREEN%}%n%f"
+	else # root
+		echo "%{$CRED%}%n%f"
+	fi
+}
+
+function prprompt() {
+	if [[ $UID -ne 0 ]]; then # normal user
+		echo "%{$CGREEN%}%# %f"
+	else # root
+		echo "%{$CRED%}%# %f"
+	fi
+}
+
+function prhost() {
+	if [[ -n "$SSH_CLIENT"  ||  -n "$SSH2_CLIENT" ]]; then
+		echo "%{$CRED%}%M%f" # SSH
+	else
+		echo "%{$CGREEN%}%M%f" # no SSH
+	fi
+
+}
+
+function linecolor() {
+	if [[ $UID -ne 0 ]]; then # normal user
+		echo "%{$CWHITE%}"
+	else # root
+		echo "%{$CRED%}"
+	fi
+}
+
+precmd() {
+	#	PREXIT=""
+	EXITCODE="$?"
+	ECE="${(%):-$EXITCODE}"
+	#	print $EXITCODE
+	#	print $ECE
+	#	print ${#ECE}
+	if [[ ${EXITCODE} -ge 128 && ${EXITCODE} -le (127+${#signals}) ]]
+	then
+		SIGNAME=":${signals[${EXITCODE}-127]}"
+	else
+		SIGNAME=""
+	fi
+	PREXIT='%{$(linecolor)%}┤%K{1}%{$CWHITE%}%B$EXITCODE$SIGNAME%b%k%{$(linecolor)%}├'
+	local zero="%([BSUbfksu]|([FK]|){*})"
+	LEFT="%{$(linecolor)%}┌┤$(pruser)%{$CCYAN%}@$(prhost) %{$CBLUE%}%2~/%f$(git_prompt_info)%{$(linecolor)%}├"
+	RIGHT="%{$(linecolor)%}┤%{$CLOCKCOLOR%}%D{%m-%f-%y %L:%M:%S}%{$(linecolor)%}├"
+	LS=${(S%%)LEFT//$~zero/}
+	LPROMPTLEN=${#LS}
+	RS=${(S%%)RIGHT//$~zero/}
+	RPROMPTLEN=${#RS}
+	LINE1='$LEFT${(l:$COLUMNS-$LPROMPTLEN-$RPROMPTLEN-4::─:)}$RIGHT'
+}
+precmd
+setprompts() {
+	PS1=$LINE1$'\n'"└%(?..$PREXIT)─$(prprompt)"
+}
+
+setprompts
+sysinfo
+
+alias ls='colorls -G'
+alias vim="nvim"
+alias vi="nvim"
+#alias vim='vim --servername vim'
+
+man() {
+	LESS_TERMCAP_md=$'\e[01;31m' \
+		LESS_TERMCAP_me=$'\e[0m' \
+		LESS_TERMCAP_se=$'\e[0m' \
+		LESS_TERMCAP_so=$'\e[01;44;33m' \
+		LESS_TERMCAP_ue=$'\e[0m' \
+		LESS_TERMCAP_us=$'\e[01;32m' \
+		command man "$@"
+}

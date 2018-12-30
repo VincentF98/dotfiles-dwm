@@ -1,0 +1,87 @@
+setopt PROMPT_SUBST
+setopt append_history share_history histignorealldups
+setopt auto_cd
+
+setopt RM_STAR_WAIT
+setopt interactivecomments
+autoload -Uz compinit promptinit
+compinit
+promptinit
+
+HISTFILE=~/.histfile
+HISTSIZE=1000
+SAVEHIST=1000
+
+export EDITOR='vim'
+export USE_EDITOR=$EDITOR
+export VISUAL=$EDITOR
+export TERM='xterm-256color'
+
+bindkey "^[[A" history-beginning-search-backward
+bindkey "^[[B" history-beginning-search-forward
+
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' menu select
+set menu_complete
+source /etc/zsh/git.zsh
+ZSH_THEME_GIT_PROMPT_PREFIX_CLEAN="%F{green}‹"
+ZSH_THEME_GIT_PROMPT_PREFIX_DIRTY="%F{yellow}‹"
+ZSH_THEME_GIT_PROMPT_SUFFIX_CLEAN="%F{green}›%f"
+ZSH_THEME_GIT_PROMPT_SUFFIX_DIRTY="%F{yellow}›%f"
+ZSH_THEME_GIT_PROMPT_CLEAN=""
+ZSH_THEME_GIT_PROMPT_DIRTY="*"
+
+function pruser() {
+	if [[ $UID -ne 0 ]]; then # normal user
+		echo '%F{green}%n%f'
+	else # root
+		echo '%F{red}%n%f'
+	fi
+}
+
+function prprompt() {
+	if [[ $UID -ne 0 ]]; then # normal user
+		echo '%F{green}%# %f'
+	else # root
+		echo '%F{red}%# %f'
+	fi
+}
+
+function prhost() {
+	if [[ -n "$SSH_CLIENT"  ||  -n "$SSH2_CLIENT" ]]; then
+		echo '%F{red}%M%f' # SSH
+	else
+		echo '%F{green}%M%f' # no SSH
+	fi
+
+}
+
+precmd() {
+	#	PREXIT=""
+	EXITCODE="$?"
+	ECE="${(%):-$EXITCODE}"
+	#	print $EXITCODE
+	#	print $ECE
+	#	print ${#ECE}
+	PREXIT='${(l:COLUMNS-${#ECE}-3:: :)}%F{red}${EXITCODE} ↵ %f'
+	local zero='%([BSUbfksu]|([FK]|){*})'
+	LEFT="╭─$(pruser)%F{cyan}@$(prhost) %B%F{blue}%~%f%b"
+	RIGHT="$(git_prompt_info)"
+	local LS=${(S%%)LEFT//$~zero/}
+	LPROMPTLEN=${#LS}
+	local RS=${(S%%)RIGHT//$~zero/}
+	RPROMPTLEN=${#RS}
+	LINE1='$LEFT${(l:COLUMNS-$LPROMPTLEN-$RPROMPTLEN:: :)}$RIGHT'
+
+}
+precmd
+setprompts() {
+	RPS1=""
+	#RPS1="%(?..%F{blue}%? ↵)"
+	PS1="%(?..$PREXIT)$LINE1
+╰─$(prprompt)"
+}
+
+setprompts
+#source $HOME/.zsh-custom/aliases
+#source $ZSH/oh-my-zsh.sh
