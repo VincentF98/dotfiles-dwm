@@ -1,0 +1,119 @@
+* Set Up =use-package=
+** Tell =use-package= to ensure all my packages are installed
+#+BEGIN_SRC emacs-lisp
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
+#+END_SRC
+** Always compile packages and use latest version
+#+BEGIN_SRC emacs-lisp
+(use-package auto-compile
+  :config (auto-compile-on-load-mode))
+
+(setq load-prefer-newer t)
+#+END_SRC
+* =evil-mode=
+#+BEGIN_SRC emacs-lisp
+(use-package evil
+  :config
+  (evil-mode 1))
+#+END_SRC
+* UI preferences
+** Disable menus, toolbars and scrollbar
+#+BEGIN_SRC emacs-lisp
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+(set-window-scroll-bars (minibuffer-window) nil nil)
+#+END_SRC
+** Don't show startup screen
+#+BEGIN_SRC emacs-lisp
+(setq inhibit-startup-screen t)
+#+END_SRC
+** Load color theme
+#+BEGIN_SRC emacs-lisp
+(use-package gruvbox-theme)
+(load-theme 'gruvbox-dark-hard t)
+#+END_SRC
+** Use a pretty modeline
+#+BEGIN_SRC emacs-lisp
+	(use-package doom-modeline
+		:ensure t
+		:hook (after-init . doom-modeline-mode))
+#+END_SRC
+** Highlight matching parentheses
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode t)
+#+END_SRC
+** Enable line numbers
+#+BEGIN_SRC emacs-lisp
+(global-linum-mode t)
+#+END_SRC
+** Use complete dwm tile
+#+BEGIN_SRC emacs-lisp
+(setq frame-resize-pixelwise t)
+#+END_SRC
+** Redraw frame
+#+BEGIN_SRC emacs-lisp
+(redraw-frame)
+#+END_SRC
+* Project management
+** =company=
+#+BEGIN_SRC emacs-lisp
+(use-package company)
+(add-hook 'after-init-hook 'global-company-mode)
+#+END_SRC
+** =flycheck=
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck)
+#+END_SRC
+** =magit=
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :bind
+    ("C-x g" . magit-status)
+
+    :config
+    (use-package evil-magit)
+    (use-package with-editor)
+
+    (with-eval-after-load 'magit-remote
+      (magit-define-popup-action 'magit-push-popup ?P
+				 'magit-push-implicitly--desc
+				 'magit-push-implicitly ?p t))
+
+    (add-hook 'with-editor-mode-hook 'evil-insert-state))
+#+END_SRC
+* Programming
+#+BEGIN_SRC emacs-lisp
+  (setq-default tab-width 2)
+#+END_SRC
+** Python
+#+BEGIN_SRC emacs-lisp
+  (use-package python-mode)
+#+END_SRC
+Enable =elpy= for automatic indentation, auto-complete, syntax checking, etc.
+ #+BEGIN_SRC emacs-lisp
+ (use-package elpy
+   :config
+   (setq elpy-rpc-python-command "python3")
+   (setq python-shell-interpreter "python3"))
+ (elpy-enable)
+ #+END_SRC
+ Use =flycheck= for syntax checking
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'elpy-mode-hook 'flycheck-mode)
+#+END_SRC
+* LaTeX
+#+BEGIN_SRC emacs-lisp
+	(setq TeX-parse-self t)
+	(setq TeX-PDF-mode t)
+
+	(setq TeX-view-program-selection
+				'((output-dvi "DVI Viewer")
+					(output-pdf "PDF Viewer")))
+	(setq TeX-view-program-list
+				'(("DVI Viewer" "zathura %o")
+					("PDF Viewer" "zathura %o")))
+
+	(set-default 'preview-scale-function 1.2)
+#+END_SRC
