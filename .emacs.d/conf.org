@@ -13,9 +13,16 @@
 #+END_SRC
 * =evil-mode=
 #+BEGIN_SRC emacs-lisp
-(use-package evil
-  :config
-  (evil-mode 1))
+	(use-package evil
+		:config
+		(evil-mode 1)
+
+	;; Make evil-mode up/down operate in screen lines instead of logical lines
+		(define-key evil-motion-state-map "j" 'evil-next-visual-line)
+		(define-key evil-motion-state-map "k" 'evil-previous-visual-line)
+		;; Also in visual mode
+		(define-key evil-visual-state-map "j" 'evil-next-visual-line)
+		(define-key evil-visual-state-map "k" 'evil-previous-visual-line))
 #+END_SRC
 * UI preferences
 ** Disable menus, toolbars and scrollbar
@@ -56,6 +63,18 @@
 #+BEGIN_SRC emacs-lisp
 (redraw-frame)
 #+END_SRC
+* Helm
+#+BEGIN_SRC emacs-lisp
+	(use-package helm
+		:bind (("M-x" . helm-M-x))
+		:config (progn
+				(setq helm-buffers-fuzzy-matching t)
+				(helm-mode 1)))
+#+END_SRC
+
+#+RESULTS:
+: helm-M-x
+
 * Project management
 ** =company=
 #+BEGIN_SRC emacs-lisp
@@ -105,6 +124,8 @@ Enable =elpy= for automatic indentation, auto-complete, syntax checking, etc.
 #+END_SRC
 * LaTeX
 #+BEGIN_SRC emacs-lisp
+	(use-package auctex
+		:defer t)
 	(setq TeX-parse-self t)
 	(setq TeX-PDF-mode t)
 
@@ -116,4 +137,41 @@ Enable =elpy= for automatic indentation, auto-complete, syntax checking, etc.
 					("PDF Viewer" "zathura %o")))
 
 	(set-default 'preview-scale-function 1.2)
+#+END_SRC
+* Org
+#+BEGIN_SRC emacs-lisp
+	(use-package htmlize
+		:defer t)
+	(use-package cdlatex
+		:defer t)
+
+	(setq org-file-apps
+			(quote
+					((auto-mode . emacs)
+					("\\.mm\\'" . default)
+					("\\.x?html?\\'" . "/usr/bin/firefox %s")
+					("\\.pdf\\'" . "zathura %s"))))
+	(add-to-list 'org-src-lang-modes '("latex-macros" . latex))
+
+	(defvar org-babel-default-header-args:latex-macros
+		'((:results . "raw")
+			(:exports . "results")))
+
+	(defun prefix-all-lines (pre body)
+		(with-temp-buffer
+			(insert body)
+			(string-insert-rectangle (point-min) (point-max) pre)
+			(buffer-string)))
+
+	(defun org-babel-execute:latex-macros (body _params)
+		(concat
+		 (prefix-all-lines "#+LATEX_HEADER: " body)
+		 "\n#+HTML_HEAD_EXTRA: <div style=\"display: none\"> \\(\n"
+		 (prefix-all-lines "#+HTML_HEAD_EXTRA: " body)
+		 "\n#+HTML_HEAD_EXTRA: \\)</div>\n"))
+
+	(defun my-org-confirm-babel-evaluate (lang body)
+		(not (string= lang "latex-macros")))  ; don't ask for ditaa
+	(setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
+
 #+END_SRC
