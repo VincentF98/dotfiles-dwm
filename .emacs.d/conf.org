@@ -122,10 +122,39 @@ Enable =elpy= for automatic indentation, auto-complete, syntax checking, etc.
 #+BEGIN_SRC emacs-lisp
   (add-hook 'elpy-mode-hook 'flycheck-mode)
 #+END_SRC
+** zig
+#+BEGIN_SRC emacs-lisp
+	(use-package zig-mode
+		:defer t)
+
+	(add-hook 'zig-mode-hook (setq indent-tabs-mode nil))
+#+END_SRC
+** rust
+#+BEGIN_SRC emacs-lisp
+	(use-package rust-mode
+		:config
+		(setq rust-format-on-save t))
+#+END_SRC
+** ocaml
+#+BEGIN_SRC emacs-lisp
+	(use-package tuareg
+		:config
+		(add-hook 'tuareg-mode-hook
+							(lambda()
+								(when (functionp 'prettify-symbols-mode)
+									(prettify-symbols-mode)))))
+#+END_SRC
 * LaTeX
 #+BEGIN_SRC emacs-lisp
 	(use-package auctex
 		:defer t)
+
+	(use-package cdlatex
+		:defer t
+		:init (add-hook 'org-mode-hook 'cdlatex-mode)
+					(add-hook 'LaTeX-mode-hook 'cdlatex-mode)
+					(add-hook 'latex-mode-hook 'cdlatex-mode))
+
 	(setq TeX-parse-self t)
 	(setq TeX-PDF-mode t)
 
@@ -141,8 +170,6 @@ Enable =elpy= for automatic indentation, auto-complete, syntax checking, etc.
 * Org
 #+BEGIN_SRC emacs-lisp
 	(use-package htmlize
-		:defer t)
-	(use-package cdlatex
 		:defer t)
 
 	(setq org-file-apps
@@ -173,5 +200,5 @@ Enable =elpy= for automatic indentation, auto-complete, syntax checking, etc.
 	(defun my-org-confirm-babel-evaluate (lang body)
 		(not (string= lang "latex-macros")))  ; don't ask for ditaa
 	(setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
-
 #+END_SRC
+
