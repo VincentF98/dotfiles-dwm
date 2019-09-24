@@ -83,7 +83,12 @@
 #+END_SRC
 ** =flycheck=
 #+BEGIN_SRC emacs-lisp
-(use-package flycheck)
+		(use-package flycheck-rust
+			:defer t)
+		(use-package flycheck
+			:config
+			(add-hook 'flycheck-mode-hook #'flycheck-rust-setup)
+			(global-flycheck-mode))
 #+END_SRC
 ** =magit=
 #+BEGIN_SRC emacs-lisp
@@ -131,18 +136,27 @@ Enable =elpy= for automatic indentation, auto-complete, syntax checking, etc.
 #+END_SRC
 ** rust
 #+BEGIN_SRC emacs-lisp
-	(use-package rust-mode
-		:config
-		(setq rust-format-on-save t))
+		(use-package rust-mode
+			:config
+			(setq rust-format-on-save t)
+			(add-hook 'rust-mode-hook 'turn-on-eldoc-mode))
+
+		(use-package racer
+			:config
+			(setq racer-cmd "~/.cargo/bin/racer")
+			(setq racer-rust-src-path "~/rust/src")
+
+			(add-hook  'rust-mode-hook #'racer-mode)
+			(add-hook  'rust-mode-hook #'eldoc-mode)
+			(add-hook  'rust-mode-hook #'company-mode)
+
+			(define-key rust-mode-map (kbd "TAB") #'company-indent-or-complete-common)
+			(setq company-tooltip-align-annotations t))
 #+END_SRC
 ** ocaml
 #+BEGIN_SRC emacs-lisp
 	(use-package tuareg
-		:config
-		(add-hook 'tuareg-mode-hook
-							(lambda()
-								(when (functionp 'prettify-symbols-mode)
-									(prettify-symbols-mode)))))
+		:defer t)
 #+END_SRC
 * LaTeX
 #+BEGIN_SRC emacs-lisp
