@@ -143,9 +143,6 @@ Enable =elpy= for automatic indentation, auto-complete, syntax checking, etc.
 
 		(use-package racer
 			:config
-			(setq racer-cmd "~/.cargo/bin/racer")
-			(setq racer-rust-src-path "~/rust/src")
-
 			(add-hook  'rust-mode-hook #'racer-mode)
 			(add-hook  'rust-mode-hook #'eldoc-mode)
 			(add-hook  'rust-mode-hook #'company-mode)
